@@ -10,6 +10,7 @@ const cors = require('cors');
 const secrets = require('./secrets.js');
 
 const DB_name = 'solar'
+const measurement_name = 'current'
 
 const app = express();
 app.use(cors())
@@ -52,7 +53,7 @@ influx.getDatabaseNames()
 
 app.get('/data', (req, res) => {
   influx.query(`
-    select * from current
+    select * from ${measurement_name}
   `)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
@@ -95,7 +96,7 @@ mqtt_client.on('message', (topic, payload) => {
   influx.writePoints(
     [
       {
-        measurement: 'battery',
+        measurement: measurement_name,
         tags: {
           unit: "V",
         },
