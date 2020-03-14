@@ -29,7 +29,6 @@ const mqtt_client  = mqtt.connect('mqtt://192.168.1.2', secrets.mqtt);
 const influx = new Influx.InfluxDB({
   host: secrets.influx.url,
   database: DB_name,
-
 })
 
 
