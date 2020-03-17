@@ -63,8 +63,8 @@ app.get('/current_battery_voltage', (req, res) => {
   influx.query(`
     select * from ${measurement_name} GROUP BY * ORDER BY DESC LIMIT 1
   `)
-  .then( result => res.send(result[0].voltage) )
-  .catch( error => res.status(500).send(`Error getting batteyr voltage from Influx: ${error}`));
+  .then( result => res.send(result[0]) )
+  .catch( error => res.status(500).send(`Error getting battery voltage from InfluxDB: ${error}`));
 })
 
 app.get('/drop', (req, res) => {
