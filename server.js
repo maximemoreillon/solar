@@ -19,6 +19,7 @@ app.use(history({
   rewrites: [
     { from: '/data', to: '/data'},
     { from: '/drop', to: '/drop'},
+    { from: '/current_battery_voltage', to: '/current_battery_voltage'},
   ]
 }));
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -58,6 +59,14 @@ app.get('/data', (req, res) => {
   .catch( error => res.status(500) );
 })
 
+app.get('/current_battery_voltage', (req, res) => {
+  influx.query(`
+    select * from ${measurement_name} GROUP BY * ORDER BY DESC LIMIT 1
+  `)
+  .then( result => res.send(result[0]) )
+  .catch( error => res.status(500).send(`Error getting batteyr voltage from Influx: ${error}`));
+})
+
 app.get('/drop', (req, res) => {
   influx.dropDatabase(DB_name)
   .then( () => {
@@ -90,6 +99,8 @@ mqtt_client.on('connect', () => {
 mqtt_client.on('message', (topic, payload) => {
   console.log("[MQTT] Message arrived on " + topic)
   console.log(JSON.parse(payload))
+
+  //TODO: check if payload can be parsed!
 
 
   influx.writePoints(
