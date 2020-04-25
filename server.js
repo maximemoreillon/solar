@@ -6,8 +6,14 @@ const bodyParser = require("body-parser");
 const http = require('http');
 const mqtt = require('mqtt');
 const cors = require('cors');
+const dotenv = require('dotenv');
 
 const secrets = require('./secrets.js');
+
+dotenv.config();
+
+var port = 80
+if(process.env.APP_PORT) port=process.env.APP_PORT
 
 const DB_name = 'solar'
 const measurement_name = 'current'
@@ -33,7 +39,7 @@ const influx = new Influx.InfluxDB({
 })
 
 
-const PORT = 7668
+
 
 // Create DB if not exists
 influx.getDatabaseNames()
@@ -88,7 +94,7 @@ app.get('/drop', (req, res) => {
   .catch(error => res.status(500).send(error));
 })
 
-app.listen(PORT, () => console.log(`[Express] Solar power manager listening on 0.0.0.0:${PORT}`))
+app.listen(port, () => console.log(`[Express] Solar power manager listening on 0.0.0.0:${port}`))
 
 
 mqtt_client.on('connect', () => {
