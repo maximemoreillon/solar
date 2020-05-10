@@ -16,16 +16,19 @@ var port = 80
 if(process.env.APP_PORT) port=process.env.APP_PORT
 
 const DB_name = 'solar'
-const measurement_name = 'current'
+const battery_voltage_measurement = 'battery_voltage'
+const current_measurement = 'current'
 
 const app = express();
 app.use(cors())
 app.use(history({
   // Ignore routes for connect-history-api-fallback
   rewrites: [
-    { from: '/data', to: '/data'},
     { from: '/drop', to: '/drop'},
-    { from: '/current_battery_voltage', to: '/current_battery_voltage'},
+    { from: '/battery_voltage/history', to: '/battery_voltage/history'},
+    { from: '/battery_voltage/current', to: '/battery_voltage/current'},
+    { from: '/current/history', to: '/current/history'},
+    { from: '/current/current', to: '/current/current'},
   ]
 }));
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -57,20 +60,36 @@ influx.getDatabaseNames()
 .catch(error => console.log(error));
 
 
-app.get('/data', (req, res) => {
+app.get('/battery_voltage/history', (req, res) => {
   influx.query(`
-    select * from ${measurement_name}
+    select * from ${battery_voltage_measurement}
   `)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
 })
 
-app.get('/current_battery_voltage', (req, res) => {
+app.get('/battery_voltage/current', (req, res) => {
   influx.query(`
-    select * from ${measurement_name} GROUP BY * ORDER BY DESC LIMIT 1
+    select * from ${battery_voltage_measurement} GROUP BY * ORDER BY DESC LIMIT 1
   `)
   .then( result => res.send(result[0]) )
-  .catch( error => res.status(500).send(`Error getting battery voltage from InfluxDB: ${error}`));
+  .catch( error => res.status(500).send(`Error getting current from InfluxDB: ${error}`));
+})
+
+app.get('/current/history', (req, res) => {
+  influx.query(`
+    select * from ${current_measurement}
+  `)
+  .then( result => res.send(result) )
+  .catch( error => res.status(500) );
+})
+
+app.get('/current/current', (req, res) => {
+  influx.query(`
+    select * from ${current_measurement} GROUP BY * ORDER BY DESC LIMIT 1
+  `)
+  .then( result => res.send(result[0]) )
+  .catch( error => res.status(500).send(`Error getting current from InfluxDB: ${error}`));
 })
 
 app.get('/drop', (req, res) => {
@@ -112,7 +131,7 @@ mqtt_client.on('message', (topic, payload) => {
   influx.writePoints(
     [
       {
-        measurement: measurement_name,
+        measurement: battery_voltage_measurement,
         tags: {
           unit: "V",
         },
@@ -120,7 +139,18 @@ mqtt_client.on('message', (topic, payload) => {
           voltage: Number(JSON.parse(payload).battery_voltage),
         },
         timestamp: new Date(),
-      }
+      },
+      {
+        measurement: current_measurement,
+        tags: {
+          unit: "A",
+        },
+        fields: {
+          voltage: Number(JSON.parse(payload).current),
+        },
+        timestamp: new Date(),
+      },
+
     ], {
       database: DB_name,
       precision: 's',
