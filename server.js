@@ -8,8 +8,6 @@ const mqtt = require('mqtt');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-const secrets = require('./secrets.js');
-
 dotenv.config();
 
 var port = 80
@@ -34,10 +32,13 @@ app.use(history({
 app.use(express.static(path.join(__dirname, 'dist')));
 
 //const influx = new Influx.InfluxDB('http://localhost:8086/' + DB_name)
-const mqtt_client  = mqtt.connect('mqtt://192.168.1.2', secrets.mqtt);
+const mqtt_client  = mqtt.connect(process.env.MQTT_URL, {
+  username: process.env.MQTT_USERNAME,
+  password: process.env.MQTT_PASSWORD
+});
 
 const influx = new Influx.InfluxDB({
-  host: secrets.influx.url,
+  host: process.env.INFLUXDB_URL,
   database: DB_name,
 })
 
