@@ -1,7 +1,6 @@
 const Influx = require('influx');
 const path = require('path');
 const express = require('express');
-const history = require('connect-history-api-fallback');
 const bodyParser = require("body-parser");
 const http = require('http');
 const mqtt = require('mqtt');
@@ -19,17 +18,7 @@ const current_measurement = 'current'
 
 const app = express();
 app.use(cors())
-app.use(history({
-  // Ignore routes for connect-history-api-fallback
-  rewrites: [
-    { from: '/drop', to: '/drop'},
-    { from: '/battery_voltage/history', to: '/battery_voltage/history'},
-    { from: '/battery_voltage/current', to: '/battery_voltage/current'},
-    { from: '/current/history', to: '/current/history'},
-    { from: '/current/current', to: '/current/current'},
-  ]
-}));
-app.use(express.static(path.join(__dirname, 'dist')));
+
 
 //const influx = new Influx.InfluxDB('http://localhost:8086/' + DB_name)
 const mqtt_client  = mqtt.connect(process.env.MQTT_URL, {
@@ -60,13 +49,16 @@ influx.getDatabaseNames()
 })
 .catch(error => console.log(error));
 
-
-app.get('/battery_voltage/history', (req, res) => {
+app.get('/', (req, res) => {
   influx.query(`
     select * from ${battery_voltage_measurement}
   `)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
+})
+
+app.get('/battery_voltage/history', (req, res) => {
+  res.send(`Solar setup battery monitor API, Maxime MOREILLON`)
 })
 
 app.get('/battery_voltage/current', (req, res) => {
