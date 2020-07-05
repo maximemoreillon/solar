@@ -50,15 +50,16 @@ influx.getDatabaseNames()
 .catch(error => console.log(error));
 
 app.get('/', (req, res) => {
+  res.send(`Solar setup battery monitor API, Maxime MOREILLON`)
+
+})
+
+app.get('/battery_voltage/history', (req, res) => {
   influx.query(`
     select * from ${battery_voltage_measurement}
   `)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
-})
-
-app.get('/battery_voltage/history', (req, res) => {
-  res.send(`Solar setup battery monitor API, Maxime MOREILLON`)
 })
 
 app.get('/battery_voltage/current', (req, res) => {
