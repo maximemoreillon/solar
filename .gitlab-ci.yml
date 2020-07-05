@@ -5,7 +5,7 @@ stages:
 variables:
   APPLICATION_NAME: solar
   DOCKER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
-  CERTIFICATE_DOMAIN: solar.maximemoreillon.com
+  CERTIFICATE_DOMAIN: api.solar.home.maximemoreillon.com
 
 containerization:
   stage: containerization
