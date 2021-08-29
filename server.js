@@ -1,16 +1,16 @@
-const Influx = require('influx');
-const path = require('path');
-const express = require('express');
-const bodyParser = require("body-parser");
-const http = require('http');
-const mqtt = require('mqtt');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const Influx = require('influx')
+const path = require('path')
+const express = require('express')
+const bodyParser = require("body-parser")
+const http = require('http')
+const mqtt = require('mqtt')
+const cors = require('cors')
+const dotenv = require('dotenv')
+const pjson = require('./package.json')
 
-dotenv.config();
+dotenv.config()
 
-var port = 80
-if(process.env.APP_PORT) port=process.env.APP_PORT
+const port = process.env.APP_PORT || 80
 
 const DB_name = 'solar'
 const battery_voltage_measurement = 'battery_voltage'
@@ -24,7 +24,7 @@ app.use(cors())
 const mqtt_client  = mqtt.connect(process.env.MQTT_URL, {
   username: process.env.MQTT_USERNAME,
   password: process.env.MQTT_PASSWORD
-});
+})
 
 const influx = new Influx.InfluxDB({
   host: process.env.INFLUXDB_URL,
@@ -50,8 +50,12 @@ influx.getDatabaseNames()
 .catch(error => console.log(error));
 
 app.get('/', (req, res) => {
-  res.send(`Solar setup battery monitor API, Maxime MOREILLON`)
-
+  res.send({
+    application_name: `Solar setup monitoring API URL`,
+    version: pjson.version,
+    influxdb_url: process.env.INFLUXDB_URL || 'undefined',
+    mqtt_url: process.env.MQTT_URL || 'undefined',
+  })
 })
 
 app.get('/battery_voltage/history', (req, res) => {
