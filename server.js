@@ -37,17 +37,15 @@ const influx = new Influx.InfluxDB({
 // Create DB if not exists
 influx.getDatabaseNames()
 .then(names => {
-  if (!names.includes(DB_name)) {
-    influx.createDatabase(DB_name)
-    .then(() => {
-      influx.query(`CREATE RETENTION POLICY "renention_policy" ON "${DB_name}" DURATION 72h REPLICATION 1 DEFAULT`)
-      .then( result => console.log(`Database ${DB_name} created successfully`) )
-      .catch( error =>  console.log(error) );
-    })
-    .catch( error =>  console.log(error) );
-  }
+  if (names.includes(DB_name)) return
+  return influx.createDatabase(DB_name)
 })
-.catch(error => console.log(error));
+.then(() => {
+  return influx.query(`CREATE RETENTION POLICY "renention_policy" ON "${DB_name}" DURATION 72h REPLICATION 1 DEFAULT`)
+})
+.then( result => console.log(`[InfluxDB] Database ${DB_name} created successfully`) )
+.catch( error =>  console.log(error) )
+
 
 app.get('/', (req, res) => {
   res.send({
@@ -59,55 +57,46 @@ app.get('/', (req, res) => {
 })
 
 app.get('/battery_voltage/history', (req, res) => {
-  influx.query(`
-    select * from ${battery_voltage_measurement}
-  `)
+  const query = `select * from ${battery_voltage_measurement}`
+  influx.query(query)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
 })
 
 app.get('/battery_voltage/current', (req, res) => {
-  influx.query(`
-    select * from ${battery_voltage_measurement} GROUP BY * ORDER BY DESC LIMIT 1
-  `)
+  const query = `select * from ${battery_voltage_measurement} GROUP BY * ORDER BY DESC LIMIT 1`
+  influx.query(query)
   .then( result => res.send(result[0]) )
-  .catch( error => res.status(500).send(`Error getting current from InfluxDB: ${error}`));
+  .catch( error => res.status(500).send(`Error getting voltge from InfluxDB: ${error}`));
 })
 
 app.get('/current/history', (req, res) => {
-  influx.query(`
-    select * from ${current_measurement}
-  `)
+  const query = `select * from ${current_measurement}`
+  influx.query(query)
   .then( result => res.send(result) )
   .catch( error => res.status(500) );
 })
 
 app.get('/current/current', (req, res) => {
-  influx.query(`
-    select * from ${current_measurement} GROUP BY * ORDER BY DESC LIMIT 1
-  `)
+  const query = `select * from ${current_measurement} GROUP BY * ORDER BY DESC LIMIT 1`
+  influx.query(query)
   .then( result => res.send(result[0]) )
   .catch( error => res.status(500).send(`Error getting current from InfluxDB: ${error}`));
 })
 
-app.get('/drop', (req, res) => {
-  influx.dropDatabase(DB_name)
-  .then( () => {
+app.delete('/data', (req, res) => {
 
-    influx.getDatabaseNames()
-    .then(names => {
-      if (!names.includes(DB_name)) {
-        influx.createDatabase(DB_name)
-        .then(() => {
-          influx.query(`CREATE RETENTION POLICY "renention_policy" ON "${DB_name}" DURATION 72h REPLICATION 1 DEFAULT`)
-          .then( result => res.send(`Database ${DB_name} created successfully`) )
-          .catch( error =>  res.status(500).send(error) );
-        })
-        .catch( error =>  res.status(500).send(error) );
-      }
-    })
-    .catch(error => res.status(500).send(error));
+  influx.dropDatabase(DB_name)
+  .then( () => influx.getDatabaseNames())
+  .then( (names) => {
+    if (names.includes(DB_name)) return
+
+    return influx.createDatabase(DB_name)
   })
+  .then(() => {
+    return influx.query(`CREATE RETENTION POLICY "renention_policy" ON "${DB_name}" DURATION 72h REPLICATION 1 DEFAULT`)
+  })
+  .then( result => res.send(`Database ${DB_name} dropped and recreated`) )
   .catch(error => res.status(500).send(error));
 })
 
@@ -130,9 +119,7 @@ mqtt_client.on('message', (topic, payload) => {
     [
       {
         measurement: battery_voltage_measurement,
-        tags: {
-          unit: "V",
-        },
+        tags: { unit: "V", },
         fields: {
           voltage: Number(JSON.parse(payload).battery_voltage),
         },
@@ -140,9 +127,7 @@ mqtt_client.on('message', (topic, payload) => {
       },
       {
         measurement: current_measurement,
-        tags: {
-          unit: "A",
-        },
+        tags: { unit: "A", },
         fields: {
           voltage: Number(JSON.parse(payload).current),
         },
