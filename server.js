@@ -110,9 +110,11 @@ mqtt_client.on('connect', () => {
 
 mqtt_client.on('message', (topic, payload) => {
   console.log("[MQTT] Message arrived on " + topic)
-  console.log(JSON.parse(payload))
 
   //TODO: check if payload can be parsed!
+
+  const payload_json = JSON.parse(payload)
+  const timestamp = new Date()
 
 
   influx.writePoints(
@@ -120,18 +122,14 @@ mqtt_client.on('message', (topic, payload) => {
       {
         measurement: battery_voltage_measurement,
         tags: { unit: "V", },
-        fields: {
-          voltage: Number(JSON.parse(payload).battery_voltage),
-        },
-        timestamp: new Date(),
+        fields: { voltage: Number(payload_json.battery_voltage) },
+        timestamp,
       },
       {
         measurement: current_measurement,
         tags: { unit: "A", },
-        fields: {
-          voltage: Number(JSON.parse(payload).current),
-        },
-        timestamp: new Date(),
+        fields: { current: Number(payload_json.current) },
+        timestamp,
       },
 
     ], {
@@ -140,6 +138,6 @@ mqtt_client.on('message', (topic, payload) => {
     })
     .catch(error => {
       console.error(`Error saving data to InfluxDB! ${error}`)
-    });
+    })
 
 });
