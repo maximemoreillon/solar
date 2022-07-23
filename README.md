@@ -1,6 +1,8 @@
 # Solar setup monitor
 
-A monitoring system for a solar installation
+THIS APPLICATION HAS BEEN DEPRECATED
+
+A monitoring system for a solar installation.
 
 ## API
 | Route | Method | query/body | Description |

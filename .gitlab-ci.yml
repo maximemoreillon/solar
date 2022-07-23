@@ -1,6 +1,6 @@
 stages:
   - containerization
-  - deploy
+  # - deploy
 
 variables:
   APPLICATION_NAME: solar
@@ -10,7 +10,7 @@ variables:
 containerization:
   stage: containerization
   tags:
-    - moreillon
+    - dind
   script:
     # Docker hub login
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin;
@@ -20,12 +20,12 @@ containerization:
     # Cleanup
     - docker image rm ${DOCKER_IMAGE}
 
-deployment:
-  stage: deploy
-  script:
-    - envsubst < deployment.yml | kubectl apply -f -
-    - kubectl rollout restart deployment/${APPLICATION_NAME}
-  environment:
-    name: production
-    kubernetes:
-      namespace: ${KUBERNETES_NAMESPACE}
+# deployment:
+#   stage: deploy
+#   script:
+#     - envsubst < deployment.yml | kubectl apply -f -
+#     - kubectl rollout restart deployment/${APPLICATION_NAME}
+#   environment:
+#     name: production
+#     kubernetes:
+#       namespace: ${KUBERNETES_NAMESPACE}
