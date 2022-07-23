@@ -1,5 +1,5 @@
 stages:
-  - containerization
+  - build
   # - deploy
 
 variables:
@@ -7,8 +7,8 @@ variables:
   DOCKER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CERTIFICATE_DOMAIN: api.solar.home.maximemoreillon.com
 
-containerization:
-  stage: containerization
+build:
+  stage: build
   tags:
     - dind
   script:
@@ -20,7 +20,7 @@ containerization:
     # Cleanup
     - docker image rm ${DOCKER_IMAGE}
 
-# deployment:
+# deploy:
 #   stage: deploy
 #   script:
 #     - envsubst < deployment.yml | kubectl apply -f -
